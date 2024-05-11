@@ -100,6 +100,8 @@ class EventHandler(AssistantEventHandler):
                         st.session_state.chat_log.append(
                             {"name": "assistant", "msg": output}
                         )
+        elif tool_call.type=="function":
+            handle_function_call(tool_call)
         elif (
             tool_call.type == "function"
             and self.current_run.status == "requires_action"
@@ -211,6 +213,25 @@ def render_chat():
         with st.chat_message(chat["name"]):
             st.markdown(chat["msg"], True)
 
+def handle_function_call(tool_call):
+    tool_outputs = []
+    for submit_tool_call in tool_call.function.submitted_tool_calls:
+        tool_function_name = submit_tool_call.function.name
+        tool_function_arguments = json.loads(submit_tool_call.function.arguments)
+        tool_function_output = TOOL_MAP[tool_function_name](**tool_function_arguments)
+        tool_outputs.append({
+            "tool_call_id": submit_tool_call.id,
+            "output": tool_function_output,
+        })
+
+    # Submitting tool outputs and handling the stream
+    with client.beta.threads.runs.submit_tool_outputs_stream(
+        thread_id=st.session_state.thread.id,
+        run_id=tool_call.run_id,
+        tool_outputs=tool_outputs,
+        event_handler=EventHandler(),
+    ) as stream:
+        stream.until_done()
 
 if "tool_call" not in st.session_state:
     st.session_state.tool_calls = []
