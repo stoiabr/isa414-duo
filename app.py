@@ -9,6 +9,7 @@ from openai import AssistantEventHandler
 from tools import TOOL_MAP
 from typing_extensions import override
 
+logourl = "https://github.com/stoiabr/isa414-duo/blob/main/is414logo.png?raw=true"
 
 azure_openai_endpoint = os.environ.get("AZURE_OPENAI_ENDPOINT")
 azure_openai_key = os.environ.get("AZURE_OPENAI_KEY")
@@ -249,6 +250,7 @@ def disable_form():
 
 def main():
     st.title(assistant_title)
+    st.image(logourl)
     user_msg = st.chat_input(
         "Message", on_submit=disable_form, disabled=st.session_state.in_progress
     )
